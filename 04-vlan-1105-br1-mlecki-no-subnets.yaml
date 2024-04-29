@@ -1,0 +1,32 @@
+---
+apiVersion: k8s.cni.cncf.io/v1
+kind: NetworkAttachmentDefinition
+metadata:
+  annotations:
+    description: Lab Network 172.20.133.0/24 VLAN1105 OVN Bridge
+  name: vlan-1105-br1-mlecki
+  namespace: mlecki
+spec:
+  config: |-
+    {
+      "cniVersion": "0.3.1",
+      "name": "bridge-mlecki",
+      "type": "ovn-k8s-cni-overlay",
+      "topology": "localnet",
+      "netAttachDefName": "mlecki/vlan-1105-br1-mlecki",
+      "vlanID": 1105
+    }
+---
+apiVersion: nmstate.io/v1
+kind: NodeNetworkConfigurationPolicy
+metadata:
+  name: ovs-mapping-bridge-mlecki
+spec:
+  nodeSelector:
+    node-role.kubernetes.io/worker: ""
+  desiredState:
+    ovn:
+      bridge-mappings:
+      - bridge: ovs-br1
+        localnet: bridge-mlecki
+        state: present

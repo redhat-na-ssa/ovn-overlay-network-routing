@@ -1,0 +1,180 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ext-gw-ocp-gpu-worker1
+  namespace: mlecki
+  annotations:
+#    k8s.v1.cni.cncf.io/networks: "layer2-test,mlecki/vlan-1105-br1-mlecki"
+    k8s.v1.cni.cncf.io/networks: |-
+      [{
+          "name": "layer2-test",
+          "ips": [ "172.20.148.10/24" ]
+      },{
+          "name": "vlan-1105-br1-mlecki",
+          "ips": [ "172.20.133.10/24" ]
+      }]
+spec:
+  containers:
+  - name: frr
+    image: quay.io/frrouting/frr:9.1.0
+    command:
+          - sh
+          - -c
+          - >-
+             sysctl -w net.ipv4.ip_forward=1 &&
+             ip r d default &&
+             ip l s mtu 1400 dev net1 &&
+             ip l a vrrp4-2-1 link net1 addrgenmode random type macvlan mode bridge &&
+             ip l s dev vrrp4-2-1 address 00:00:5e:00:01:05 &&
+             ip a a 172.20.148.1/24 dev vrrp4-2-1 &&
+             ip l s dev vrrp4-2-1 up &&
+             /usr/lib/frr/frrinit.sh start &&
+             tail -f /tmp/frr.log
+    ports:
+    - name: bfd
+      containerPort: 3784
+      protocol: UDP
+    - name: bgp
+      containerPort: 179
+      protocol: TCP
+    - name: rip
+      containerPort: 520
+      protocol: UDP
+    - name: ripng
+      containerPort: 521
+      protocol: UDP
+    - name: stats
+      containerPort: 9000
+      protocol: TCP
+    securityContext:
+      privileged: true
+    volumeMounts:
+    - name: config-volume
+      mountPath: /etc/frr
+  volumes:
+    - name: config-volume
+      configMap:
+        name: frr-configs
+  nodeSelector:
+    kubernetes.io/hostname: ocp-gpu-worker1
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ext-gw-ocp-gpu-worker2
+  namespace: mlecki
+  annotations:
+#    k8s.v1.cni.cncf.io/networks: "layer2-test,mlecki/vlan-1105-br1-mlecki"
+    k8s.v1.cni.cncf.io/networks: |-
+      [{
+          "name": "layer2-test",
+          "ips": [ "172.20.148.11/24" ]
+      },{
+          "name": "vlan-1105-br1-mlecki",
+          "ips": [ "172.20.133.11/24" ]
+      }]
+spec:
+  containers:
+  - name: frr
+    image: quay.io/frrouting/frr:9.1.0
+    command:
+          - sh
+          - -c
+          - >-
+             sysctl -w net.ipv4.ip_forward=1 &&
+             ip r d default &&
+             ip l s mtu 1400 dev net1 &&
+             ip l a vrrp4-2-1 link net1 addrgenmode random type macvlan mode bridge &&
+             ip l set dev vrrp4-2-1 address 00:00:5e:00:01:05 &&
+             ip a a 172.20.148.1/24 dev vrrp4-2-1 &&
+             ip l s dev vrrp4-2-1 up &&
+             /usr/lib/frr/frrinit.sh start &&
+             tail -f /tmp/frr.log
+    ports:
+    - name: bfd
+      containerPort: 3784
+      protocol: UDP
+    - name: bgp
+      containerPort: 179
+      protocol: TCP
+    - name: rip
+      containerPort: 520
+      protocol: UDP
+    - name: ripng
+      containerPort: 521
+      protocol: UDP
+    - name: stats
+      containerPort: 9000
+      protocol: TCP
+    securityContext:
+      privileged: true
+    volumeMounts:
+    - name: config-volume
+      mountPath: /etc/frr
+  volumes:
+    - name: config-volume
+      configMap:
+        name: frr-configs
+  nodeSelector:
+    kubernetes.io/hostname: ocp-gpu-worker2
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ext-gw-ocp-gpu-worker3
+  namespace: mlecki
+  annotations:
+#    k8s.v1.cni.cncf.io/networks: "layer2-test,mlecki/vlan-1105-br1-mlecki"
+    k8s.v1.cni.cncf.io/networks: |-
+      [{
+          "name": "layer2-test",
+          "ips": [ "172.20.148.12/24" ]
+      },{
+          "name": "vlan-1105-br1-mlecki",
+          "ips": [ "172.20.133.12/24" ]
+      }]
+spec:
+  containers:
+  - name: frr
+    image: quay.io/frrouting/frr:9.1.0
+    command:
+          - sh
+          - -c
+          - >-
+             sysctl -w net.ipv4.ip_forward=1 &&
+             ip r d default &&
+             ip l s mtu 1400 dev net1 &&
+             ip l a vrrp4-2-1 link net1 addrgenmode random type macvlan mode bridge &&
+             ip l s dev vrrp4-2-1 address 00:00:5e:00:01:05 &&
+             ip a a 172.20.148.1/24 dev vrrp4-2-1 &&
+             ip l s dev vrrp4-2-1 up &&
+             /usr/lib/frr/frrinit.sh start &&
+             tail -f /tmp/frr.log
+    ports:
+    - name: bfd
+      containerPort: 3784
+      protocol: UDP
+    - name: bgp
+      containerPort: 179
+      protocol: TCP
+    - name: rip
+      containerPort: 520
+      protocol: UDP
+    - name: ripng
+      containerPort: 521
+      protocol: UDP
+    - name: stats
+      containerPort: 9000
+      protocol: TCP
+    securityContext:
+      privileged: true
+    volumeMounts:
+    - name: config-volume
+      mountPath: /etc/frr
+  volumes:
+    - name: config-volume
+      configMap:
+        name: frr-configs
+  nodeSelector:
+    kubernetes.io/hostname: ocp-gpu-worker3

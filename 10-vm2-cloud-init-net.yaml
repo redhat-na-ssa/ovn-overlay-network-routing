@@ -1,0 +1,105 @@
+apiVersion: kubevirt.io/v1
+kind: VirtualMachine
+metadata:
+  labels:
+    app: vm2
+    kubevirt.io/dynamic-credentials-support: "true"
+    vm.kubevirt.io/template: rhel9-server-small
+    vm.kubevirt.io/template.namespace: openshift
+    vm.kubevirt.io/template.revision: "1"
+    vm.kubevirt.io/template.version: v0.26.0
+  name: vm2
+  namespace: mlecki
+spec:
+  dataVolumeTemplates:
+  - apiVersion: cdi.kubevirt.io/v1beta1
+    kind: DataVolume
+    metadata:
+      name: vm2
+    spec:
+      sourceRef:
+        kind: DataSource
+        name: rhel9
+        namespace: openshift-virtualization-os-images
+      storage:
+        resources:
+          requests:
+            storage: 32Gi
+  running: true
+  template:
+    metadata:
+      annotations:
+        vm.kubevirt.io/flavor: small
+        vm.kubevirt.io/os: rhel9
+        vm.kubevirt.io/workload: server
+      creationTimestamp: null
+      labels:
+        kubevirt.io/domain: vm2
+        kubevirt.io/size: small
+    spec:
+      accessCredentials:
+        - sshPublicKey:
+            propagationMethod:
+              noCloud: {}
+            source:
+              secret:
+                secretName: mlecki-pubkey 
+      architecture: amd64
+      domain:
+        cpu:
+          cores: 2
+          sockets: 1
+          threads: 1
+        devices:
+          disks:
+          - disk:
+              bus: virtio
+            name: rootdisk
+          - disk:
+              bus: virtio
+            name: cloudinitdisk
+          interfaces:
+          - bridge: {}
+            model: virtio
+            name: nic-alert-tarsier2
+          networkInterfaceMultiqueue: true
+          rng: {}
+        features:
+          acpi: {}
+          smm:
+            enabled: true
+        firmware:
+          bootloader:
+            efi: {}
+        machine:
+          type: pc-q35-rhel9.2.0
+        memory:
+          guest: 16Gi
+        resources: {}
+      networks:
+      - multus:
+          networkName: layer2-test
+        name: nic-alert-tarsier2
+      terminationGracePeriodSeconds: 180
+      volumes:
+      - dataVolume:
+          name: vm2
+        name: rootdisk
+      - cloudInitNoCloud:
+          networkData: |
+            ethernets:
+              eth0:
+                mtu: 1400
+                addresses:
+                  - 172.20.148.65/24
+                gateway4: 172.20.148.10
+                nameservers:
+                  addresses:
+                    - 172.20.129.1
+            version: 2
+          userData: |-
+            #cloud-config
+            user: cloud-user
+            password: Passw0rd
+            chpasswd: { expire: False }
+        name: cloudinitdisk

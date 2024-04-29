@@ -1,0 +1,90 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frr-configs
+  namespace: mlecki
+data:
+  daemons: |
+    bgpd=yes
+    ospfd=yes
+    ospf6d=no
+    ripd=no
+    ripngd=no
+    isisd=no
+    pimd=no
+    ldpd=no
+    nhrpd=no
+    eigrpd=no
+    babeld=no
+    sharpd=no
+    pbrd=no
+    bfdd=yes
+    fabricd=no
+    vrrpd=yes
+    vtysh_enable=yes
+    zebra=yes
+    zebra_options="  -A 127.0.0.1 -s 90000000"
+    bgpd_options="   -A 127.0.0.1"
+    ospfd_options="  -A 127.0.0.1"
+    ospf6d_options=" -A ::1"
+    ripd_options="   -A 127.0.0.1"
+    ripngd_options=" -A ::1"
+    isisd_options="  -A 127.0.0.1"
+    pimd_options="   -A 127.0.0.1"
+    ldpd_options="   -A 127.0.0.1"
+    nhrpd_options="  -A 127.0.0.1"
+    eigrpd_options=" -A 127.0.0.1"
+    babeld_options=" -A 127.0.0.1"
+    sharpd_options=" -A 127.0.0.1"
+    pbrd_options="   -A 127.0.0.1"
+    staticd_options="-A 127.0.0.1"
+    bfdd_options="   -A 127.0.0.1"
+    fabricd_options="-A 127.0.0.1"
+    vrrpd_options="  -A 127.0.0.1"
+  vtysh.conf: |
+    service integrated-vtysh-config
+  frr.conf: |
+    hostname vrouter
+    service integrated-vtysh-config
+    password frr
+    enable password frr
+    !
+    interface net1
+     vrrp 5 version 3
+     vrrp 5 priority 200
+     vrrp 5 advertisement-interval 1500
+     vrrp 5 ip 172.20.148.1
+    !
+    debug bfd peer
+    debug bfd zebra
+    debug bfd network
+    !
+    router bgp 65530
+    neighbor uplink peer-group
+    neighbor uplink remote-as 65515
+    neighbor uplink update-source net2
+    neighbor 172.20.133.2 peer-group uplink
+    neighbor 172.20.133.3 peer-group uplink
+    !
+    address-family ipv4 unicast
+      redistribute connected route-map outbound-filter
+      neighbor uplink route-map inbound-filter in
+      neighbor uplink route-map outbound-filter out
+    exit-address-family
+    exit
+    !
+    ip prefix-list out seq 5 permit 172.20.148.0/24
+    ip prefix-list out seq 10 permit 172.20.149.0/24
+    ip prefix-list in seq 10 permit 172.20.0.0/16 ge 24
+    ip prefix-list in seq 15 permit 0.0.0.0/0
+    !
+    route-map inbound-filter permit 10
+    match ip address prefix-list in
+    exit
+    !
+    route-map outbound-filter permit 10
+    match ip address prefix-list out
+    exit
+    !
+    log file /tmp/frr.log debugging

@@ -1,0 +1,22 @@
+---
+apiVersion: nmstate.io/v1
+kind: NodeNetworkConfigurationPolicy
+metadata:
+  annotations:
+  name: bridge-br1
+spec:
+  desiredState:
+    interfaces:
+    - bridge:
+        options:
+          stp: true
+        port:
+        - name: ens4f1
+      description: |-
+        A dedicated OVS bridge with ens4f1 as a port
+        allowing all VLANs and untagged traffic
+      name: ovs-br1
+      state: up
+      type: ovs-bridge
+  nodeSelector:
+    node-role.kubernetes.io/worker: ""
