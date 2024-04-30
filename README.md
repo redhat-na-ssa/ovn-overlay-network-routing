@@ -38,11 +38,11 @@ oc apply -f 07-frr-pod_ip_forward_vrrp.yaml
 ```
 * create vm1 for testing
 ```
-oc apply -f 09-vm1-cloud-init-net.yaml
+oc apply -f 08-vm1-cloud-init-net.yaml
 ```
 * create vm2 for testing
 ```
-oc apply -f 10-vm2-cloud-init-net.yaml
+oc apply -f 09-vm2-cloud-init-net.yaml
 ```
 
 The easy part is now done!
