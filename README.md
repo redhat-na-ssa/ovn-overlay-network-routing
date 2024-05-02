@@ -51,7 +51,8 @@ The easy part is now done!
 * List pods in "openshift-ovn-kubernetes" namespace and take note of the pods running on the worker nodes where we have FRR pods (in this case its all 3 workers):
 ```
 oc get po -o wide -n openshift-ovn-kubernetes
-
+```
+<table><tr><td>
 NAME                                     READY   STATUS    RESTARTS   AGE     IP              NODE               NOMINATED NODE   READINESS GATES
 ovnkube-control-plane-7b55b77bdd-gpm6w   2/2     Running   0          4d23h   172.20.131.22   ocp-gpu-control3   <none>           <none>
 ovnkube-control-plane-7b55b77bdd-hzg2h   2/2     Running   0          4d23h   172.20.131.20   ocp-gpu-control1   <none>           <none>
@@ -61,7 +62,7 @@ ovnkube-node-gcgnn                       8/8     Running   0          2d3h    17
 ovnkube-node-gtkps                       8/8     Running   0          2d3h    172.20.131.23   ocp-gpu-worker1    <none>           <none>
 ovnkube-node-lqct5                       8/8     Running   0          2d3h    172.20.131.20   ocp-gpu-control1   <none>           <none>
 ovnkube-node-zh7jd                       8/8     Running   0          2d3h    172.20.131.21   ocp-gpu-control2   <none>           <none>
-```
+</table></tr></td>
 * Login to ovnkube pods running on each of the workers:
 ```
 oc rsh -n openshift-ovn-kubernetes ovnkube-node-gtkps
@@ -69,11 +70,13 @@ oc rsh -n openshift-ovn-kubernetes ovnkube-node-gtkps
 * Find all the OVN layer2 and localnet ports attached to the FRR router POD:
 ```
 sh-5.1# ovn-nbctl show | grep -E 'layer2.test|vlan.1105' | grep ext-gw-ocp-gpu
+```
+<table><tr><td>
     port mlecki.layer2.test_mlecki_ext-gw-ocp-gpu-worker3
     port mlecki.layer2.test_mlecki_ext-gw-ocp-gpu-worker1
     port mlecki.layer2.test_mlecki_ext-gw-ocp-gpu-worker2
     port mlecki.vlan.1105.br1.mlecki_mlecki_ext-gw-ocp-gpu-worker2
-```
+</table></tr></td>
 * Disable port security on all the discovered OVN ports
 ```
 ovn-nbctl set logical_switch_p mlecki.layer2.test_mlecki_ext-gw-ocp-gpu-worker1 port_security='[]'
@@ -84,6 +87,8 @@ ovn-nbctl set logical_switch_p mlecki.vlan.1105.br1.mlecki_mlecki_ext-gw-ocp-gpu
 * Validate new port security setting (should be empty like this - [])
 ```
 sh-5.1# ovn-nbctl list logical_switch_p mlecki.layer2.test_mlecki_ext-gw-ocp-gpu-worker1
+```
+<table><tr><td>
 _uuid               : 6649c54c-720b-42c1-8271-4e0167a297e7
 addresses           : ["0a:58:0a:64:c8:6d 10.100.200.109"]
 dhcpv4_options      : []
@@ -101,7 +106,11 @@ tag                 : []
 tag_request         : []
 type                : ""
 up                  : true
+</table></tr></td>
+```
 sh-5.1# ovn-nbctl list logical_switch_p mlecki.vlan.1105.br1.mlecki_mlecki_ext-gw-ocp-gpu-worker1
+```
+<table><tr><td>
 _uuid               : 9e18976c-25e2-4108-a41c-87f565a58c26
 addresses           : ["0a:58:ac:14:85:39 172.20.133.57"]
 dhcpv4_options      : []
@@ -119,14 +128,15 @@ tag                 : []
 tag_request         : []
 type                : ""
 up                  : true
-sh-5.1# 
-```
+</table></tr></td>
 * ***VERY IMPORTANT:*** Repeat steps 2-5 on each of the ovn kube pods you found in step 1.
 
 ## Validation
 * Validate BGP is receiving routes from the upstream routers on each of the FRR PODs:
 ```
 ext-gw-ocp-gpu-worker1# show ip route bgp 
+```
+<table><tr><td>
 Codes: K - kernel route, C - connected, S - static, R - RIP,
        O - OSPF, I - IS-IS, B - BGP, E - EIGRP, N - NHRP,
        T - Table, v - VNC, V - VNC-Direct, A - Babel, F - PBR,
@@ -138,10 +148,12 @@ B>* 0.0.0.0/0 [20/0] via 172.20.133.2, net2, weight 1, 20:05:37
 B>* 172.20.0.0/24 [20/0] via 172.20.133.2, net2, weight 1, 20:05:37
 B>* 172.20.1.0/24 [20/0] via 172.20.133.2, net2, weight 1, 20:05:37
 B>* 172.20.2.0/24 [20/0] via 172.20.133.2, net2, weight 1, 20:05:37
-```
+</table></tr></td>
 * Validate BGP is advertising routes of the layer2 subnets:
 ```
 ext-gw-ocp-gpu-worker1# show ip bgp neighbors 172.20.133.2 advertised-routes 
+```
+<table><tr><td>
 BGP table version is 58, local router ID is 172.20.148.10, vrf id 0
 Default local pref 100, local AS 65530
 Status codes:  s suppressed, d damped, h history, * valid, > best, = multipath,
@@ -154,4 +166,4 @@ RPKI validation codes: V valid, I invalid, N Not found
  *> 172.20.148.0/24  0.0.0.0                  0         32768 ?
 
 Total number of prefixes 1
-```
+</table></tr></td>
